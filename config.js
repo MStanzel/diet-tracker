@@ -6,7 +6,7 @@
 // by the login + security rules created by setup.sql.
 
 window.APP_CONFIG = {
-  SUPABASE_URL: '',
-  SUPABASE_ANON_KEY: '',
+  SUPABASE_URL: 'https://hwmvovsjkrnnhttitndv.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_e6xkLfK-5_22s3DAi7zfBA_7oDS3NsV',
   APP_NAME: 'Diet Tracker',
 };
