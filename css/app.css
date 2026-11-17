@@ -141,3 +141,10 @@ video.scan { width: 100%; border-radius: 14px; background: #000; aspect-ratio: 4
 .star { background: none; border: 0; font-size: 22px; color: #f5b301; cursor: pointer; padding: 4px; }
 .star.off { color: var(--line); }
 .tag { font-size: 11px; padding: 2px 7px; border-radius: 99px; background: var(--line); color: var(--muted); margin-left: 6px; vertical-align: middle; }
+.radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: inline-block; }
+.radio.on { border: 7px solid var(--accent); }
+.qty { display: flex; align-items: center; gap: 4px; flex: none; }
+.qty button { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--accent-soft); color: var(--accent); font-size: 18px; cursor: pointer; }
+.qty input { width: 58px; text-align: center; padding: 6px; }
+.topbar .gear { border: 0; background: var(--card); box-shadow: var(--shadow); width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; flex: none; }
+nav.tabs button { font-size: 11px; }

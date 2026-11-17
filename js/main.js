@@ -4,8 +4,10 @@ import { makeDB } from './db.js';
 import { todayISO } from './calc.js';
 import { TodayScreen } from './today.js';
 import { ProgressScreen } from './progress.js';
-import { LibraryScreen } from './library.js';
-import { MoreScreen } from './more.js';
+import { FoodsScreen } from './library.js';
+import { RecipesScreen } from './recipes.js';
+import { CalculatorScreen } from './calculator.js';
+import { SettingsSheet } from './more.js';
 
 const db = makeDB();
 const PREF_KEY = 'diet-device-prefs';
@@ -40,6 +42,7 @@ function App() {
   const [tab, setTab] = useState('today');
   const [date, setDate] = useState(todayISO());
   const [personId, setPersonIdRaw] = useState(prefs.personId || null);
+  const [settings, setSettings] = useState(false);
 
   const setPersonId = (id) => { setPersonIdRaw(id); prefs.personId = id; savePrefs(); };
 
@@ -88,23 +91,28 @@ function App() {
 
   const tabs = [
     ['today', '📅', 'Today'],
+    ['recipes', '🍲', 'Recipes'],
+    ['foods', '🥫', 'Foods'],
+    ['calc', '🧮', 'Calculator'],
     ['progress', '📈', 'Progress'],
-    ['library', '🍲', 'Foods'],
-    ['more', '⚙️', 'More'],
   ];
+  const signOut = async () => { setSettings(false); await db.signOut(); setCore(null); setSession(db.mode === 'demo' ? await db.session() : null); };
   return html`
     <div class="topbar">
       <h1>${tabs.find((t) => t[0] === tab)[2]}</h1>
       <div class="people">${people.map((p) => html`<button class=${p.id === person.id ? 'on' : ''}
         style=${`--pc:${p.color}`} onClick=${() => setPersonId(p.id)}>${p.name}</button>`)}</div>
+      <button class="gear" aria-label="Settings" onClick=${() => setSettings(true)}>⚙️</button>
     </div>
     <main>
       ${db.mode === 'demo' && html`<div class="banner">Demo mode: data is saved on this device only. Follow the setup guide to sync between phones.</div>`}
       ${error && html`<div class="banner">Connection problem: ${error}</div>`}
       ${tab === 'today' && html`<${TodayScreen} ctx=${ctx} />`}
       ${tab === 'progress' && html`<${ProgressScreen} ctx=${ctx} />`}
-      ${tab === 'library' && html`<${LibraryScreen} ctx=${ctx} />`}
-      ${tab === 'more' && html`<${MoreScreen} ctx=${ctx} onSignOut=${async () => { await db.signOut(); setCore(null); setSession(db.mode === 'demo' ? await db.session() : null); }} />`}
+      ${tab === 'recipes' && html`<${RecipesScreen} ctx=${ctx} />`}
+      ${tab === 'foods' && html`<${FoodsScreen} ctx=${ctx} />`}
+      ${tab === 'calc' && html`<${CalculatorScreen} ctx=${ctx} />`}
+      ${settings && html`<${SettingsSheet} ctx=${ctx} onClose=${() => setSettings(false)} onSignOut=${signOut} />`}
     </main>
     <nav class="tabs"><div class="in">${tabs.map(([id, ic, label]) => html`<button class=${tab === id ? 'on' : ''} onClick=${() => { setTab(id); scrollTo(0, 0); }}>
       <span class="ic">${ic}</span>${label}</button>`)}</div></nav>

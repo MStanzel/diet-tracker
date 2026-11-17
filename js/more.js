@@ -1,26 +1,13 @@
 import { useState } from '../vendor/vendor.js';
-import { html, Sheet, toast, NumInput } from './ui.js';
-import { ACTIVITY, GOALS, todayISO, fmtNum, r1, weightOn, maintenance, calorieGoal, proteinGoal, ageOn, recipeTotals, fmtFrac, portionFor } from './calc.js';
+import { html, Sheet, toast } from './ui.js';
+import { todayISO, r1, recipeTotals, fmtFrac, portionFor } from './calc.js';
 
 const XLSX_URL = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs';
 
-export function MoreScreen({ ctx, onSignOut }) {
-  const [editP, setEditP] = useState(null);
+export function SettingsSheet({ ctx, onClose, onSignOut }) {
   const [notes, setNotes] = useState(false);
   const [busy, setBusy] = useState(false);
-  const today = todayISO();
-  return html`
-    <h3 style="margin:4px 0 8px">Goals</h3>
-    ${ctx.people.map((p) => {
-      const w = weightOn(ctx.core.weights, p.id, today)?.weight;
-      return html`<div class="card row" style="cursor:pointer;border-left:5px solid ${p.color}" onClick=${() => setEditP(p)}>
-        <div class="grow"><b>${p.name}</b>
-          <div class="small muted">${GOALS.find((g) => g.id === p.goal)?.label || 'No goal'}${p.goal === 'gain_pct' ? ` (${p.goal_pct}%)` : ''}</div>
-          <div class="small">${fmtNum(calorieGoal(p, w, today))} kcal · ${fmtNum(proteinGoal(p, w))} g protein / day</div></div>
-        <span class="muted">›</span></div>`;
-    })}
-
-    <h3 style="margin:16px 0 8px">Other</h3>
+  return html`<${Sheet} title="Settings" onClose=${onClose}>
     <div class="card" style="padding:4px 14px"><ul class="list">
       <li class="item" onClick=${() => setNotes(true)}><span>📝</span><div class="grow">Shared notes</div><span class="muted">›</span></li>
       <li class="item" onClick=${async () => { setBusy(true); try { await exportXlsx(ctx); } catch (e) { toast('Export failed: ' + e.message); } setBusy(false); }}>
@@ -31,47 +18,9 @@ export function MoreScreen({ ctx, onSignOut }) {
     </ul></div>
     <div class="card small muted">
       <b>Install on your phone:</b> open this page in Chrome, tap ⋮ (top right), then <i>Add to Home screen</i> → <i>Install</i>.
-      It will open like a normal app.
     </div>
-    <p class="small muted" style="text-align:center">Diet Tracker v1.0 · ${ctx.db.mode === 'demo' ? 'demo mode' : 'synced'}</p>
-
-    ${editP && html`<${PersonForm} ctx=${ctx} person=${editP} onClose=${() => setEditP(null)} />`}
-    ${notes && html`<${NotesSheet} ctx=${ctx} onClose=${() => setNotes(false)} />`}`;
-}
-
-function PersonForm({ ctx, person, onClose }) {
-  const [p, setP] = useState({ ...person });
-  const set = (k) => (v) => setP((x) => ({ ...x, [k]: v }));
-  const today = todayISO();
-  const w = weightOn(ctx.core.weights, p.id, today)?.weight;
-  const ft = Math.floor((p.height_in || 0) / 12), inch = r1((p.height_in || 0) % 12);
-  const save = async () => { await ctx.db.savePerson(p); await ctx.reload(); toast('Saved'); onClose(); };
-  return html`<${Sheet} full title=${`${person.name}'s profile & goals`} onClose=${onClose}
-    footer=${html`<button class="btn block" onClick=${save}>Save</button>`}>
-    <div class="card">
-      <div class="small muted">Using latest weight: <b>${w ? r1(w) + ' lb' : 'none yet'}</b>, age ${ageOn(p.birthdate)}</div>
-      <div class="grid2" style="margin-top:8px">
-        <div><div class="small muted">Maintenance</div><div class="big">${w ? fmtNum(maintenance(p, w, today)) : '—'}</div></div>
-        <div><div class="small muted">Daily goal</div><div class="big">${fmtNum(calorieGoal(p, w, today))}</div></div>
-      </div>
-      <div class="small" style="margin-top:6px">Protein target: <b>${fmtNum(proteinGoal(p, w))} g</b></div>
-    </div>
-    <div class="grid2">
-      <label class="field"><span>Name</span><input value=${p.name} onInput=${(e) => set('name')(e.target.value)} /></label>
-      <label class="field"><span>Color</span><input type="color" style="height:48px;padding:4px" value=${p.color} onInput=${(e) => set('color')(e.target.value)} /></label>
-      <label class="field"><span>Sex (for the formula)</span><select value=${p.sex} onChange=${(e) => set('sex')(e.target.value)}>
-        <option value="male">Male</option><option value="female">Female</option></select></label>
-      <label class="field"><span>Birthday</span><input type="date" value=${p.birthdate || ''} onInput=${(e) => set('birthdate')(e.target.value)} /></label>
-      <label class="field"><span>Height (feet)</span><${NumInput} value=${ft} onChange=${(v) => set('height_in')((v || 0) * 12 + inch)} /></label>
-      <label class="field"><span>Height (inches)</span><${NumInput} value=${inch} onChange=${(v) => set('height_in')(ft * 12 + (v || 0))} /></label>
-    </div>
-    <label class="field"><span>Activity level</span><select value=${String(p.activity)} onChange=${(e) => set('activity')(Number(e.target.value))}>
-      ${ACTIVITY.map(([v, l]) => html`<option value=${String(v)}>${l}</option>`)}</select></label>
-    <label class="field"><span>Goal</span><select value=${p.goal} onChange=${(e) => set('goal')(e.target.value)}>
-      ${GOALS.map((g) => html`<option value=${g.id}>${g.label}</option>`)}</select></label>
-    ${p.goal === 'gain_pct' && html`<label class="field"><span>% above maintenance</span><${NumInput} value=${p.goal_pct} onChange=${set('goal_pct')} /></label>`}
-    ${p.goal === 'custom' && html`<label class="field"><span>Daily calories</span><${NumInput} value=${p.goal_kcal} onChange=${set('goal_kcal')} /></label>`}
-    <label class="field"><span>Protein target (grams per lb of body weight)</span><${NumInput} value=${p.protein_per_lb} onChange=${set('protein_per_lb')} /></label>
+    <p class="small muted" style="text-align:center">Diet Tracker v1.1 · ${ctx.db.mode === 'demo' ? 'demo mode' : 'synced'}</p>
+    ${notes && html`<${NotesSheet} ctx=${ctx} onClose=${() => setNotes(false)} />`}
   <//>`;
 }
 

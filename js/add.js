@@ -18,7 +18,7 @@ export function recipeItem(r, ctx, personId) {
     sub: `${fmtFrac(p)} of recipe`, recipe: r, portion: p,
   };
 }
-function toEntry(item, personId, date, meal, servings) {
+export function toEntry(item, personId, date, meal, servings) {
   return {
     id: uuid(), person_id: personId, date, meal,
     food_id: item.type === 'food' ? item.id : null, recipe_id: item.type === 'recipe' ? item.id : null,
@@ -136,7 +136,7 @@ export function AddSheet({ ctx, date, meal: meal0, onClose, onAdded }) {
   <//>`;
 }
 
-function ConfirmAdd({ ctx, item, meal, onClose, onAdd }) {
+export function ConfirmAdd({ ctx, item, meal, onClose, onAdd, onMealChange }) {
   const [servings, setServings] = useState(1);
   const isShared = item.type === 'recipe';
   const [also, setAlso] = useState(() => isShared && (meal === 'dinner' || meal === 'lunch') ? ctx.otherPeople.map((p) => p.id) : []);
@@ -144,6 +144,7 @@ function ConfirmAdd({ ctx, item, meal, onClose, onAdd }) {
   const go = async () => { setBusy(true); await onAdd(item, servings, also); setBusy(false); };
   return html`<${Sheet} title=${item.name} onClose=${onClose}
     footer=${html`<button class="btn block" disabled=${busy || !servings} onClick=${go}>Add ${fmtNum(item.cal * servings)} kcal</button>`}>
+    ${onMealChange && html`<div class="chips">${MEALS.map((m) => html`<button class=${'chip' + (meal === m.id ? ' on' : '')} onClick=${() => onMealChange(m.id)}>${m.label}</button>`)}</div>`}
     <p class="muted" style="margin-top:0">${item.sub ? item.sub + ' · ' : ''}${fmtNum(item.cal)} kcal · ${fmtNum(item.pro)} g protein per serving</p>
     <label class="field"><span>${isShared ? `Portions (1 = ${ctx.person.name}'s usual portion)` : 'Servings'}</span>
       <${Stepper} value=${servings} onChange=${setServings} /></label>
