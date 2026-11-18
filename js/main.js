@@ -122,6 +122,6 @@ function App() {
 render(html`<${App} />`, document.getElementById('app'));
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update()).catch(() => {});
 }
 window.addEventListener('unhandledrejection', (e) => toast('Something went wrong: ' + (e.reason?.message || e.reason)));

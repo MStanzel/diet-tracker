@@ -12,14 +12,14 @@ export function SettingsSheet({ ctx, onClose, onSignOut }) {
       <li class="item" onClick=${() => setNotes(true)}><span>📝</span><div class="grow">Shared notes</div><span class="muted">›</span></li>
       <li class="item" onClick=${async () => { setBusy(true); try { await exportXlsx(ctx); } catch (e) { toast('Export failed: ' + e.message); } setBusy(false); }}>
         <span>⬇️</span><div class="grow">${busy ? 'Preparing…' : 'Download everything (Excel)'}<div class="small muted">Daily totals, full log, foods, recipes, weights</div></div></li>
-      <li class="item" onClick=${() => location.reload()}><span>🔄</span><div class="grow">Refresh app</div></li>
+      <li class="item" onClick=${hardRefresh}><span>🔄</span><div class="grow">Refresh app<div class="small muted">Gets the newest version</div></div></li>
       <li class="item" onClick=${() => confirm(ctx.db.mode === 'demo' ? 'Reset demo data on this device?' : 'Sign out on this phone?') && onSignOut()}>
         <span>🚪</span><div class="grow">${ctx.db.mode === 'demo' ? 'Reset demo data' : 'Sign out'}</div></li>
     </ul></div>
     <div class="card small muted">
       <b>Install on your phone:</b> open this page in Chrome, tap ⋮ (top right), then <i>Add to Home screen</i> → <i>Install</i>.
     </div>
-    <p class="small muted" style="text-align:center">Diet Tracker v1.2 · ${ctx.db.mode === 'demo' ? 'demo mode' : 'synced'}</p>
+    <p class="small muted" style="text-align:center">Diet Tracker v1.3 · ${ctx.db.mode === 'demo' ? 'demo mode' : 'synced'}</p>
     ${notes && html`<${NotesSheet} ctx=${ctx} onClose=${() => setNotes(false)} />`}
   <//>`;
 }
@@ -59,4 +59,17 @@ async function exportXlsx(ctx) {
   const add = (rows, name) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{}]), name);
   add(daily, 'Daily totals'); add(log, 'Food log'); add(weights, 'Weights'); add(foods, 'Foods'); add(recipes, 'Recipes'); add(ingr, 'Recipe ingredients');
   XLSX.writeFile(wb, `diet-tracker-${todayISO()}.xlsx`);
+}
+
+// Throw away every saved copy of the app and load fresh files from GitHub
+async function hardRefresh() {
+  toast('Updating…');
+  try {
+    for (const r of (await navigator.serviceWorker?.getRegistrations()) || []) await r.unregister();
+    for (const k of await caches.keys()) await caches.delete(k);
+    const files = ['index.html', 'config.js', 'css/app.css', 'vendor/vendor.js', 'js/main.js', 'js/calc.js', 'js/db.js', 'js/ui.js', 'js/today.js',
+      'js/add.js', 'js/library.js', 'js/scan.js', 'js/progress.js', 'js/more.js', 'js/recipes.js', 'js/calculator.js'];
+    await Promise.all(files.map((f) => fetch(f, { cache: 'reload' }).catch(() => {})));
+  } catch (e) { /* still reload */ }
+  location.reload();
 }
