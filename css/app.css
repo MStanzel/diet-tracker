@@ -148,3 +148,11 @@ video.scan { width: 100%; border-radius: 14px; background: #000; aspect-ratio: 4
 .qty input { width: 58px; text-align: center; padding: 6px; }
 .topbar .gear { border: 0; background: var(--card); box-shadow: var(--shadow); width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; flex: none; }
 nav.tabs button { font-size: 11px; }
+.fracbox { position: relative; display: inline-block; width: 100%; }
+.fracbox input { padding-right: 46px; width: 100%; }
+.fracbox .slash { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 9px; border: 0; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 20px; cursor: pointer; touch-action: manipulation; }
+.stepper .fracbox { width: 150px; }
+.stepper .fracbox input { text-align: center; font-size: 22px; font-weight: 700; padding-left: 8px; }
+.qty .fracbox { width: 104px; }
+.qty .fracbox input { width: 100%; text-align: center; padding: 6px 42px 6px 6px; }
+.qty .fracbox .slash { width: 30px; height: 30px; font-size: 17px; right: 3px; }

@@ -1,8 +1,8 @@
 // Recipes tab: list + recipe builder (the spreadsheet's Ingredient Calories / Meal.Builder).
 import { useState } from '../vendor/vendor.js';
-import { html, Sheet, toast } from './ui.js';
+import { html, Sheet, toast, NumInput } from './ui.js';
 import { uuid } from './db.js';
-import { fmtNum, fmtFrac, parseFrac, recipeTotals, portionFor, todayISO, mealLabel } from './calc.js';
+import { fmtNum, fmtFrac, recipeTotals, portionFor, todayISO, mealLabel } from './calc.js';
 import { FoodForm } from './library.js';
 import { ConfirmAdd, recipeItem, toEntry } from './add.js';
 
@@ -89,8 +89,7 @@ function RecipeEditor({ ctx, recipe, onClose }) {
             <div class="small muted">${f ? `${fmtFrac(it.qty)} × ${f.serving || 'serving'} = ${fmtNum((f.calories || 0) * it.qty)} kcal · ${fmtNum((f.protein || 0) * it.qty, 1)} g` : ''}</div></div>
           <div class="qty">
             <button aria-label="less" onClick=${() => setQty(idx, it.qty - (it.qty > 1 ? 1 : 0.25))}>−</button>
-            <input inputmode="decimal" value=${fmtFrac(it.qty)} onFocus=${(e) => e.target.select()}
-              onChange=${(e) => { const v = parseFrac(e.target.value); if (v >= 0) setQty(idx, v); }} />
+            <${NumInput} frac value=${it.qty} onChange=${(v) => v != null && v >= 0 && setQty(idx, v)} />
             <button aria-label="more" onClick=${() => setQty(idx, it.qty + (it.qty >= 1 ? 1 : 0.25))}>+</button>
             <button aria-label="remove" style="background:none;color:var(--bad)" onClick=${touch(() => setItems(items.filter((_, j) => j !== idx)))}>✕</button>
           </div>
@@ -115,8 +114,9 @@ function RecipeEditor({ ctx, recipe, onClose }) {
             <span class="small"><b>${fmtNum(t.cal * v)} kcal</b> · ${fmtNum(t.pro * v)} g protein</span></div>
           <div class="chips" style="padding-bottom:0;margin-top:6px">
             ${FRACTIONS.map((f) => html`<button class=${'chip' + (Math.abs(v - f) < 0.005 ? ' on' : '')} onClick=${touch(() => setPortions({ ...portions, [p.id]: f }))}>${f === 1 ? 'Whole' : fmtFrac(f)}</button>`)}
-            <input style="width:76px;padding:6px;text-align:center" aria-label="custom portion" placeholder="other" value=${FRACTIONS.some((f) => Math.abs(v - f) < 0.005) ? '' : fmtFrac(v)}
-              onChange=${(e) => { const x = parseFrac(e.target.value); if (x > 0) { setDirty(true); setPortions({ ...portions, [p.id]: x }); } }} />
+            <${NumInput} frac style="width:120px;flex:none" aria-label="custom portion" placeholder="other"
+              value=${FRACTIONS.some((f) => Math.abs(v - f) < 0.005) ? null : v}
+              onChange=${(x) => { if (x > 0) { setDirty(true); setPortions({ ...portions, [p.id]: x }); } }} />
           </div></div>`;
       })}
     </div>

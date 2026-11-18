@@ -34,17 +34,11 @@ export function Sheet({ title, onClose, children, footer, full = false, headerRi
   </div>`;
 }
 
-export function Stepper({ value, onChange, step = 0.5, min = 0 }) {
-  const [text, setText] = useState(fmtFrac(value));
-  useEffect(() => { if (parseFrac(text) !== value) setText(fmtFrac(value)); }, [value]);
-  const bump = (d) => onChange(Math.max(min, Math.round((value + d) * 100) / 100));
+export function Stepper({ value, onChange, step = 0.5, min = 0, frac = true }) {
+  const bump = (d) => onChange(Math.max(min, Math.round(((Number(value) || 0) + d) * 100) / 100));
   return html`<div class="stepper">
     <button type="button" aria-label="less" onClick=${() => bump(-step)}>−</button>
-    <input inputmode="decimal" value=${text} onInput=${(e) => {
-      setText(e.target.value);
-      const v = parseFrac(e.target.value);
-      if (!isNaN(v) && v >= min) onChange(v);
-    }} onFocus=${(e) => e.target.select()} />
+    <${NumInput} value=${value} frac=${frac} onChange=${(v) => v != null && v >= min && onChange(v)} />
     <button type="button" aria-label="more" onClick=${() => bump(step)}>+</button>
   </div>`;
 }
@@ -82,10 +76,38 @@ export function Field({ label, children }) {
   return html`<label class="field"><span>${label}</span>${children}</label>`;
 }
 
-// Number input that allows empty (null)
-export function NumInput({ value, onChange, placeholder, ...rest }) {
-  return html`<input inputmode="decimal" placeholder=${placeholder || ''} value=${value == null ? '' : value}
-    onInput=${(e) => { const v = e.target.value.trim(); onChange(v === '' ? null : Number(v)); }} ...${rest} />`;
+// Number box that lets you type freely ("0.", ".5", "1/8") and only reports
+// complete numbers. With frac, shows a "/" key, since Android's number
+// keyboard has no slash.
+const parseNum = (t) => parseFrac(String(t).replace(',', '.').replace(/[a-z\s]+$/i, ''));
+const show = (v, frac) => (v == null || isNaN(v) ? '' : frac ? fmtFrac(v) : String(Math.round(v * 1000) / 1000));
+export function NumInput({ value, onChange, placeholder, frac = false, style, ...rest }) {
+  const [text, setText] = useState(() => show(value, frac));
+  const ref = useRef();
+  useEffect(() => {
+    // Outside change (e.g. +/- buttons): update the box unless it already means this number
+    const cur = parseNum(text);
+    if (!(value == null && text.trim() === '') && !(cur === Number(value))) setText(show(value, frac));
+  }, [value]);
+  const update = (t) => {
+    setText(t);
+    if (t.trim() === '') return onChange(null);
+    const v = parseNum(t);
+    if (isFinite(v)) onChange(v);
+  };
+  const insertSlash = (e) => {
+    e.preventDefault(); // keep the keyboard open
+    const el = ref.current, st = el.selectionStart ?? text.length, en = el.selectionEnd ?? text.length;
+    const t = text.slice(0, st) + '/' + text.slice(en);
+    update(t);
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(st + 1, st + 1); });
+  };
+  const input = html`<input ref=${ref} type="text" inputmode="decimal" autocomplete="off" placeholder=${placeholder || ''} value=${text}
+    style=${frac ? '' : style} onInput=${(e) => update(e.target.value)} onFocus=${(e) => e.target.select()}
+    onBlur=${() => { const v = parseNum(text); if (text.trim() && isFinite(v)) setText(show(v, frac)); }} ...${rest} />`;
+  if (!frac) return input;
+  return html`<span class="fracbox" style=${style}>${input}<button type="button" class="slash" tabindex="-1" aria-label="insert slash"
+    onPointerDown=${insertSlash} onMouseDown=${(e) => e.preventDefault()}>/</button></span>`;
 }
 
 export function confirmBox(msg) { return window.confirm(msg); }

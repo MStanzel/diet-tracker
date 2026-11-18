@@ -151,7 +151,7 @@ function WeightSheet({ ctx, current, onClose }) {
     footer=${html`${hasToday && html`<button class="btn danger" onClick=${() => save(null)}>Remove</button>`}
       <button class="btn" disabled=${!val} onClick=${() => save(r1(val))}>Save</button>`}>
     <label class="field"><span>Weight (lb)</span>
-      <${Stepper} value=${val || 0} step=${0.2} onChange=${setVal} /></label>
+      <${Stepper} value=${val || 0} step=${0.2} frac=${false} onChange=${setVal} /></label>
     <p class="small muted">Your calorie and protein goals update automatically from your latest weight.</p>
   <//>`;
 }
