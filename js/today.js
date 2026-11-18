@@ -29,7 +29,7 @@ export function TodayScreen({ ctx }) {
   const copyFrom = async (fromDate, meal) => {
     const src = (await db.getEntries(fromDate)).filter((e) => e.person_id === person.id && (!meal || e.meal === meal));
     if (!src.length) { toast(`Nothing logged ${meal ? 'for that meal ' : ''}on ${friendlyDate(fromDate).toLowerCase()}`); return; }
-    const copies = src.map((e) => ({ ...e, id: uuid(), date, created_at: undefined }));
+    const copies = src.map(({ created_at, ...e }) => ({ ...e, id: uuid(), date }));
     await db.addEntries(copies);
     await load();
     toast(`Copied ${copies.length} item${copies.length > 1 ? 's' : ''}`, {

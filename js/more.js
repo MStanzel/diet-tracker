@@ -19,7 +19,7 @@ export function SettingsSheet({ ctx, onClose, onSignOut }) {
     <div class="card small muted">
       <b>Install on your phone:</b> open this page in Chrome, tap ⋮ (top right), then <i>Add to Home screen</i> → <i>Install</i>.
     </div>
-    <p class="small muted" style="text-align:center">Diet Tracker v1.3 · ${ctx.db.mode === 'demo' ? 'demo mode' : 'synced'}</p>
+    <p class="small muted" style="text-align:center">Diet Tracker v1.4 · ${ctx.db.mode === 'demo' ? 'demo mode' : 'synced'}</p>
     ${notes && html`<${NotesSheet} ctx=${ctx} onClose=${() => setNotes(false)} />`}
   <//>`;
 }

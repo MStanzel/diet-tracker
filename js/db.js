@@ -60,7 +60,19 @@ export class SupabaseDB {
       .order('created_at', { ascending: false }).limit(limit));
   }
   async addEntries(list) {
-    this._check(await this.sb.from('log_entries').insert(list.map((e) => pick(e, ENTRY_FIELDS))));
+    // Every row must carry every column with a real value: when several rows are sent
+    // together, a missing value is stored as empty (null) instead of the default.
+    const now = Date.now();
+    const rows = list.map((e, i) => {
+      const r = pick(e, ENTRY_FIELDS);
+      for (const k of Object.keys(r)) if (r[k] === undefined) delete r[k];
+      if (!r.created_at) r.created_at = new Date(now + i).toISOString(); // keeps the order they were added
+      if (!r.id) r.id = uuid();
+      for (const k of ['food_id', 'recipe_id', 'carbs', 'fat']) if (!(k in r)) r[k] = null;
+      if (r.servings == null) r.servings = 1;
+      return r;
+    });
+    this._check(await this.sb.from('log_entries').insert(rows));
   }
   async updateEntry(id, patch) { this._check(await this.sb.from('log_entries').update(patch).eq('id', id)); }
   async deleteEntry(id) { this._check(await this.sb.from('log_entries').delete().eq('id', id)); }
