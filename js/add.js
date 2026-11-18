@@ -139,7 +139,7 @@ export function AddSheet({ ctx, date, meal: meal0, onClose, onAdded }) {
 export function ConfirmAdd({ ctx, item, meal, onClose, onAdd, onMealChange }) {
   const [servings, setServings] = useState(1);
   const isShared = item.type === 'recipe';
-  const [also, setAlso] = useState(() => isShared && (meal === 'dinner' || meal === 'lunch') ? ctx.otherPeople.map((p) => p.id) : []);
+  const [also, setAlso] = useState([]); // unchecked by default
   const [busy, setBusy] = useState(false);
   const go = async () => { setBusy(true); await onAdd(item, servings, also); setBusy(false); };
   return html`<${Sheet} title=${item.name} onClose=${onClose}
