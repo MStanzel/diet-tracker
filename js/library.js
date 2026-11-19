@@ -2,6 +2,7 @@ import { useState } from '../vendor/vendor.js';
 import { html, Sheet, toast, NumInput, confirmBox } from './ui.js';
 import { uuid } from './db.js';
 import { fmtNum } from './calc.js';
+import { syncLoggedEntries } from './sync.js';
 import { BarcodeScanner, LabelScanner } from './scan.js';
 
 export function FoodsScreen({ ctx }) {
@@ -52,7 +53,8 @@ export function FoodForm({ ctx, food, onClose, onSaved }) {
   const save = async (extra = {}) => {
     const out = { ...f, ...extra, id: f.id || uuid(), name: f.name.trim(), calories: f.calories ?? 0, protein: f.protein ?? 0 };
     await ctx.db.saveFood(out);
-    toast(extra.archived === true ? 'Archived' : extra.archived === false ? 'Restored' : 'Saved');
+    const n = isNew ? 0 : await syncLoggedEntries(ctx.db);
+    toast((extra.archived === true ? 'Archived' : extra.archived === false ? 'Restored' : 'Saved') + (n ? ` · updated ${n} logged item${n > 1 ? 's' : ''}` : ''));
     onSaved(out);
   };
   return html`<${Sheet} title=${isNew ? 'New food' : 'Edit food'} onClose=${onClose}

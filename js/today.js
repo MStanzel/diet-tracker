@@ -133,7 +133,7 @@ function EntrySheet({ ctx, entry, onClose, onChanged }) {
       <label class="field"><span>Calories per serving</span><${NumInput} value=${cal} onChange=${setCal} /></label>
       <label class="field"><span>Protein per serving (g)</span><${NumInput} value=${pro} onChange=${setPro} /></label>
     </div>
-    <p class="small muted">Changing these only affects this entry, not the saved food.</p>
+    <p class="small muted">Changing these only affects this entry. If the saved food or recipe is edited later, today's entries update to match it.</p>
   <//>`;
 }
 

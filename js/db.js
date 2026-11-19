@@ -55,6 +55,9 @@ export class SupabaseDB {
   async getEntries(date) {
     return this._check(await this.sb.from('log_entries').select('*').eq('date', date).order('created_at'));
   }
+  async getEntriesFrom(date) {
+    return this._all(() => this.sb.from('log_entries').select('*').gte('date', date).order('date'));
+  }
   async getRecent(personId, limit = 400) {
     return this._check(await this.sb.from('log_entries').select('*').eq('person_id', personId)
       .order('created_at', { ascending: false }).limit(limit));
@@ -122,6 +125,7 @@ export class DemoDB {
     };
   }
   async getEntries(date) { await this._load(); return structuredClone(this.d.entries.filter((e) => e.date === date)); }
+  async getEntriesFrom(date) { await this._load(); return structuredClone(this.d.entries.filter((e) => e.date >= date)); }
   async getRecent(personId, limit = 400) {
     await this._load();
     return structuredClone(this.d.entries.filter((e) => e.person_id === personId)

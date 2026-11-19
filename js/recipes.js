@@ -5,6 +5,7 @@ import { uuid } from './db.js';
 import { fmtNum, fmtFrac, recipeTotals, portionFor, todayISO, mealLabel } from './calc.js';
 import { FoodForm } from './library.js';
 import { ConfirmAdd, recipeItem, toEntry } from './add.js';
+import { syncLoggedEntries } from './sync.js';
 
 const FRACTIONS = [1 / 6, 1 / 4, 1 / 3, 1 / 2, 1];
 
@@ -42,6 +43,7 @@ function RecipeEditor({ ctx, recipe, onClose }) {
   const [items, setItems] = useState(() => (ctx.itemsByRecipe[recipe.id] || []).map((i) => ({ ...i })));
   const [portions, setPortions] = useState(() => Object.fromEntries(ctx.people.map((p) => [p.id, portionFor(recipe, p.id)])));
   const [picking, setPicking] = useState(false);
+  const [editFood, setEditFood] = useState(null);
   const [dirty, setDirty] = useState(isNew);
   const [logging, setLogging] = useState(false);
   const [meal, setMeal] = useState(new Date().getHours() < 15 ? 'lunch' : 'dinner');
@@ -54,9 +56,10 @@ function RecipeEditor({ ctx, recipe, onClose }) {
       portions, archived: archived ?? !!r.archived,
     };
     await ctx.db.saveRecipe(out, items.filter((i) => i.qty > 0).map((i) => ({ id: uuid(), food_id: i.food_id, qty: i.qty })));
+    const n = asCopy ? 0 : await syncLoggedEntries(ctx.db);
     await ctx.reload();
     setDirty(false);
-    if (!quiet) toast(asCopy ? 'Copy created' : archived != null ? (archived ? 'Recipe archived' : 'Recipe restored') : 'Recipe saved');
+    if (!quiet) toast((asCopy ? 'Copy created' : archived != null ? (archived ? 'Recipe archived' : 'Recipe restored') : 'Recipe saved') + (n ? ` · updated ${n} logged item${n > 1 ? 's' : ''}` : ''));
     return out;
   };
   const setQty = (idx, qty) => { setDirty(true); setItems(items.map((it, j) => (j === idx ? { ...it, qty: Math.max(0, Math.round(qty * 100) / 100) } : it))); };
@@ -80,12 +83,12 @@ function RecipeEditor({ ctx, recipe, onClose }) {
 
     <div class="card">
       <h2>Ingredients</h2>
-      <p class="small muted" style="margin:2px 0 6px">The amount is how many servings of that ingredient go in, e.g. 2 = two cans.</p>
+      <p class="small muted" style="margin:2px 0 6px">The amount is how many servings of that ingredient go in, e.g. 2 = two cans. Tap an ingredient's name to edit its calories or protein.</p>
       ${items.length === 0 && html`<div class="empty">No ingredients yet. Tap "Add ingredient".</div>`}
       <ul class="list">${items.map((it, idx) => {
         const f = ctx.foodsById[it.food_id];
         return html`<li class="item" style="cursor:default;flex-wrap:wrap">
-          <div class="grow" style="min-width:140px"><div class="name">${f ? f.name : '(deleted food)'}</div>
+          <div class="grow" style="min-width:140px;cursor:pointer" onClick=${() => f && setEditFood(f)}><div class="name">${f ? f.name : '(deleted food)'} ${f && html`<span class="muted small">✎</span>`}</div>
             <div class="small muted">${f ? `${fmtFrac(it.qty)} × ${f.serving || 'serving'} = ${fmtNum((f.calories || 0) * it.qty)} kcal · ${fmtNum((f.protein || 0) * it.qty, 1)} g` : ''}</div></div>
           <div class="qty">
             <button aria-label="less" onClick=${() => setQty(idx, it.qty - (it.qty > 1 ? 1 : 0.25))}>−</button>
@@ -126,6 +129,8 @@ function RecipeEditor({ ctx, recipe, onClose }) {
       <button class="btn secondary grow" onClick=${async () => { await save({ asCopy: true }); onClose(); }}>Duplicate (try a new version)</button>
       <button class="btn danger" onClick=${async () => { await save({ archived: !r.archived }); onClose(); }}>${r.archived ? 'Restore' : 'Archive'}</button></div>`}
 
+    ${editFood && html`<${FoodForm} ctx=${ctx} food=${editFood} onClose=${() => setEditFood(null)}
+      onSaved=${async () => { await ctx.reload(); setEditFood(null); }} />`}
     ${picking && html`<${IngredientPicker} ctx=${ctx} onClose=${() => setPicking(false)}
       onPick=${(f, qty) => { setDirty(true); setItems([...items, { food_id: f.id, qty }]); setPicking(false); }} />`}
     ${logging && saved && html`<${ConfirmAdd} ctx=${ctx} item=${recipeItem(saved, ctx, ctx.person.id)} meal=${meal} onMealChange=${setMeal}

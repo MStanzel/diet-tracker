@@ -1,8 +1,8 @@
 // Offline support: always try the network first (so updates show up right away),
 // fall back to the saved copy when offline.
-const CACHE = 'diet-v7';
+const CACHE = 'diet-v8';
 const SHELL = ['./', 'index.html', 'config.js', 'css/app.css', 'vendor/vendor.js', 'manifest.webmanifest',
-  'js/main.js', 'js/calc.js', 'js/db.js', 'js/ui.js', 'js/today.js', 'js/add.js', 'js/library.js', 'js/scan.js', 'js/progress.js', 'js/more.js', 'js/recipes.js', 'js/calculator.js',
+  'js/main.js', 'js/calc.js', 'js/db.js', 'js/ui.js', 'js/today.js', 'js/add.js', 'js/library.js', 'js/scan.js', 'js/progress.js', 'js/more.js', 'js/recipes.js', 'js/calculator.js', 'js/sync.js',
   'icons/logo-192.png'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));

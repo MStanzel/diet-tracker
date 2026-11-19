@@ -19,7 +19,7 @@ export function SettingsSheet({ ctx, onClose, onSignOut }) {
     <div class="card small muted">
       <b>Install on your phone:</b> open this page in Chrome, tap ⋮ (top right), then <i>Add to Home screen</i> → <i>Install</i>.
     </div>
-    <p class="small muted" style="text-align:center">Diet Tracker v1.6 · ${ctx.db.mode === 'demo' ? 'demo mode' : 'synced'}</p>
+    <p class="small muted" style="text-align:center">Diet Tracker v1.7 · ${ctx.db.mode === 'demo' ? 'demo mode' : 'synced'}</p>
     ${notes && html`<${NotesSheet} ctx=${ctx} onClose=${() => setNotes(false)} />`}
   <//>`;
 }
@@ -68,7 +68,7 @@ async function hardRefresh() {
     for (const r of (await navigator.serviceWorker?.getRegistrations()) || []) await r.unregister();
     for (const k of await caches.keys()) await caches.delete(k);
     const files = ['index.html', 'config.js', 'css/app.css', 'vendor/vendor.js', 'js/main.js', 'js/calc.js', 'js/db.js', 'js/ui.js', 'js/today.js',
-      'js/add.js', 'js/library.js', 'js/scan.js', 'js/progress.js', 'js/more.js', 'js/recipes.js', 'js/calculator.js'];
+      'js/add.js', 'js/library.js', 'js/scan.js', 'js/progress.js', 'js/more.js', 'js/recipes.js', 'js/calculator.js', 'js/sync.js'];
     await Promise.all(files.map((f) => fetch(f, { cache: 'reload' }).catch(() => {})));
   } catch (e) { /* still reload */ }
   location.reload();
